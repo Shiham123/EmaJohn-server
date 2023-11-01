@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -9,8 +9,8 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// const uri = 'mongodb://localhost:27017';
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster-one.varjcyv.mongodb.net/?retryWrites=true&w=majority`;
+const uri = 'mongodb://localhost:27017';
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster-one.varjcyv.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -39,6 +39,18 @@ const run = async () => {
     app.get('/productsCount', async (req, res) => {
       const count = await productCollection.estimatedDocumentCount();
       res.send({ count });
+    });
+
+    app.post('/productByIds', async (request, response) => {
+      const ids = request.body;
+      const perIds = ids.map((id) => new ObjectId(id));
+      const query = {
+        _id: {
+          $in: perIds,
+        },
+      };
+      const result = await productCollection.find(query).toArray();
+      response.send(result);
     });
 
     await client.db('admin').command({ ping: 1 });
